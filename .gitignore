@@ -1,0 +1,4 @@
+# attempt at a .gitignore file #
+################################
+# removing personal decklists used for testing
+*.txt
