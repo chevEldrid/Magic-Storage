@@ -1,5 +1,6 @@
 # imports the io library
 import io
+import re
 import openpyxl
 from openpyxl import Workbook
 from openpyxl import load_workbook
@@ -8,19 +9,12 @@ from openpyxl import load_workbook
 # INPUT: txt file of magic cards
 # OUTPUT: a list with each card's name repeated the number of times that card is in the deck
 def file_to_list(filename):
+    # type: (object) -> object
     f = open(filename, "r")
     # list to hold temporary list of cards
     temp = []
     for line in f:
-        # I think there was an empty line at the end of the file so this exception clause helps that
-        try:
-            num = int(line[:1])
-        except ValueError:
-            num = 0
-        for i in range(num):
-            temp.append(line[2:(len(line) - 1)])
-    # file_contents = file.read()
-    # print file_contents
+        temp.append(line[:(len(line) - 1)])
     file.close(f)
     return temp
 
@@ -41,13 +35,23 @@ def add_deck(card_list, deck_name):
     except KeyError:
         ws = wb.create_sheet(0, deck_name)
     # Deck header...
-    ws['A1'] = "Cards"
+    ws['A1'] = "Qty"
+    ws['B1'] = "Name"
     # sets parameters to then iterate through card list to put all in excel doc
     row = 2
-    col = 'A'
     for card in card_list:
-        pos = col + str(row)
-        ws[pos] = card
+        # because list seems to go on a little long...past the end of the cards
+        if card:
+            # gets the number of copies this card is in the deck
+            pos = 'A' + str(row)
+            num = re.findall(r'\d', card)
+            if num:
+                ws[pos] = num[0]
+            else:
+                ws[pos] = 1
+            # attaches the name of the card to the number
+            pos = 'B' + str(row)
+            ws[pos] = card[2:(len(card))]
         row += 1
     wb.save('Card Library.xlsx')
 
@@ -66,31 +70,41 @@ def load_library():
     # creates a Card Library excel doc, and if one deoesn't exist. Makes a new one
     try:
         wb = load_workbook("Card Library.xlsx")
-        for sheet in wb.worksheets:
+        # for sheet in wb.worksheets:
 
     # catches specific openpyxl exception to cannot find excel book
     except openpyxl.shared.exc.InvalidFileException:
         print "You don't have a card library yet! Try adding some decks!"
 
 
-# actual program
+#############################################################################
+# script
+# loads initial library
+try:
+    wb = load_workbook("Card Library.xlsx")
+    print "Previous library loaded!"
+# catches specific openpyxl exception to cannot find excel book
+except openpyxl.shared.exc.InvalidFileException:
+    wb = Workbook()
+    print "New library created!"
+    # add the code for "Total" n stuff...
+wb.save('Card Library.xlsx')
+# UI
 while True:
     response = raw_input('What would you like to do?: ').lower()
     if response == "add a deck":
         update_card_library()
-    if response == "modify a deck":
+    elif response == "modify a deck":
         print "If this deck cannot be found in the Card Library, it will be added automatically!"
         update_card_library()
-    if response == "exit":
+    elif response == "exit":
         break
-    if response == "help":
+    elif response == "help":
         print "Commands available in this program are: add a deck, modify a deck, exit"
-    if response == "load library":
+    elif response == "load library":
         load_library()
     else:
         print "Could not recognize that command! Type 'help' if stuck!"
 
 # insert other if conditions here...
-
-
 print "test complete!"
